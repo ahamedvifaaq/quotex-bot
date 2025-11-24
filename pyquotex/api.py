@@ -11,6 +11,7 @@ import certifi
 import logging
 import platform
 import threading
+from urllib.parse import urlparse
 from . import global_value
 from .http.login import Login
 from .http.logout import Logout
@@ -472,6 +473,18 @@ class QuotexAPI(object):
             },
             "reconnect": 5
         }
+        
+        if self.proxies and "http" in self.proxies:
+            try:
+                proxy_url = urlparse(self.proxies["http"])
+                payload["http_proxy_host"] = proxy_url.hostname
+                payload["http_proxy_port"] = proxy_url.port
+                if proxy_url.username and proxy_url.password:
+                    payload["http_proxy_auth"] = (proxy_url.username, proxy_url.password)
+                logger.info(f"Using Proxy: {proxy_url.hostname}:{proxy_url.port}")
+            except Exception as e:
+                logger.error(f"Failed to parse proxy: {e}")
+
         if platform.system() == "Linux":
             payload["sslopt"]["ssl_version"] = ssl.PROTOCOL_TLS
         self.websocket_thread = threading.Thread(

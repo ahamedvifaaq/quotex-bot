@@ -23,115 +23,6 @@ from .utils.indicators import TechnicalIndicators
 
 logger = logging.getLogger(__name__)
 
-
-class Quotex:
-
-    def __init__(
-            self,
-            email=None,
-            password=None,
-            lang="pt",
-            user_agent="Quotex/1.0",
-            root_path=".",
-            user_data_dir="browser",
-            asset_default="EURUSD",
-            period_default=60
-    ):
-        self.size = [
-            5,
-            10,
-            15,
-            30,
-            60,
-            120,
-            300,
-            600,
-            900,
-            1800,
-            3600,
-            7200,
-            14400,
-            86400,
-        ]
-        self.email = email
-        self.password = password
-        self.lang = lang
-        self.resource_path = root_path
-        self.user_data_dir = user_data_dir
-        self.asset_default = asset_default
-        self.period_default = period_default
-        self.subscribe_candle = []
-        self.subscribe_candle_all_size = []
-        self.subscribe_mood = []
-        self.account_is_demo = 1
-        self.suspend = 0.2
-        self.codes_asset = {}
-        self.api = None
-        self.duration = None
-        self.websocket_client = None
-        self.websocket_thread = None
-        self.debug_ws_enable = False
-        self.resource_path = resource_path(root_path)
-        session = load_session(user_agent)
-        self.session_data = session
-        if not email or not password:
-            self.email, self.password = credentials()
-
-    @property
-    def websocket(self):
-        """Property to get websocket.
-        :returns: The instance of :class:`WebSocket <websocket.WebSocket>`.
-        """
-        return self.websocket_client.wss
-
-    @staticmethod
-    async def check_connect():
-        await asyncio.sleep(2)
-        if global_value.check_accepted_connection == 1:
-            return True
-
-        return False
-
-    def set_session(self, user_agent: str, cookies: str = None, ssid: str = None):
-        session = {
-            "cookies": cookies,
-            "token": ssid,
-            "user_agent": user_agent
-        }
-        self.session_data = update_session(session)
-
-    async def re_subscribe_stream(self):
-        try:
-            for ac in self.subscribe_candle:
-                sp = ac.split(",")
-                await self.start_candles_one_stream(sp[0], sp[1])
-        except:
-            pass
-        try:
-            for ac in self.subscribe_candle_all_size:
-                await self.start_candles_all_size_stream(ac)
-        except:
-            pass
-        try:
-            for ac in self.subscribe_mood:
-                await self.start_mood_stream(ac)
-        except:
-            pass
-
-    async def get_instruments(self):
-        while self.check_connect and self.api.instruments is None:
-            await asyncio.sleep(0.2)
-        return self.api.instruments or []
-
-    def get_all_asset_name(self):
-        if self.api.instruments:
-            return [[i[1], i[2].replace("\n", "")] for i in self.api.instruments]
-
-    async def get_available_asset(self, asset_name: str, force_open: bool = False):
-        _, asset_open = await self.check_asset_open(asset_name)
-        if force_open and (not asset_open or not asset_open[2]):
-            condition_otc = "otc" not in asset_name
-            refactor_asset = asset_name.replace("_otc", "")
             asset_name = f"{asset_name}_otc" if condition_otc else refactor_asset
             _, asset_open = await self.check_asset_open(asset_name)
 
@@ -221,7 +112,8 @@ class Quotex:
             self.password,
             self.lang,
             resource_path=self.resource_path,
-            user_data_dir=self.user_data_dir
+            user_data_dir=self.user_data_dir,
+            proxies=self.proxies
         )
         await self.close()
         self.api.trace_ws = self.debug_ws_enable

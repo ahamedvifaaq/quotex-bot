@@ -12,6 +12,12 @@ config = configparser.ConfigParser(interpolation=None)
 
 
 def credentials():
+    # Check Environment Variables first (for Cloud/Render)
+    email = os.environ.get("QUOTEX_EMAIL")
+    password = os.environ.get("QUOTEX_PASS")
+    
+    if email and password:
+        return email, password
 
     if not config_path.exists():
         config_path.parent.mkdir(exist_ok=True, parents=True)
@@ -32,6 +38,54 @@ def credentials():
         sys.exit()
 
     return email, password
+
+
+def email_credentials():
+    # Check Environment Variables first (for Cloud/Render)
+    email_user = os.environ.get("EMAIL_USER")
+    email_pass = os.environ.get("EMAIL_PASS")
+    
+    if email_user and email_pass:
+        return email_user, email_pass
+
+    config.read(config_path, encoding="utf-8")
+    
+    email_user = config.get("settings", "email_user", fallback=None)
+    email_pass = config.get("settings", "email_pass", fallback=None)
+
+    if not email_user or not email_pass:
+        print("\n--- Email Configuration ---")
+        print("Please enter your Gmail credentials for the trading bot.")
+        print("NOTE: For password, use an App Password (https://myaccount.google.com/apppasswords)")
+        
+        email_user = input('Enter your Gmail address: ')
+        email_pass = input('Enter your Gmail App Password: ')
+        
+        if not config.has_section("settings"):
+            config.add_section("settings")
+            
+        config.set("settings", "email_user", email_user)
+        config.set("settings", "email_pass", email_pass)
+        
+        with open(config_path, 'w') as configfile:
+            config.write(configfile)
+
+    return email_user, email_pass
+
+def proxy():
+    # Check Environment Variables first
+    proxy_url = os.environ.get("QUOTEX_PROXY")
+    
+    if proxy_url:
+        return {"http": proxy_url, "https": proxy_url}
+        
+    config.read(config_path, encoding="utf-8")
+    proxy_url = config.get("settings", "proxy", fallback=None)
+    
+    if proxy_url:
+        return {"http": proxy_url, "https": proxy_url}
+        
+    return None
 
 
 def resource_path(relative_path: str | Path) -> Path:

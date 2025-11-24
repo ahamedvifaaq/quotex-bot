@@ -1,3 +1,7 @@
+def clean_json_string(content):
+    """
+    Clean the content string to extract valid JSON.
+    Finds the first '{' and the last '}' to isolate the JSON object.
     """
     try:
         start = content.find('{')

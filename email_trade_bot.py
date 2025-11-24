@@ -1,3 +1,42 @@
+from pyquotex import Quotex
+from pyquotex.config import email_credentials, proxy
+import asyncio
+import imaplib
+import email
+from email.header import decode_header
+import json
+import time
+import re
+from pathlib import Path
+from database import log_trade, init_db
+
+# Email Configuration
+IMAP_SERVER = "imap.gmail.com"
+
+async def connect_quotex():
+    """
+    Connects to Quotex using credentials from config.
+    """
+    # Get Proxy
+    user_proxy = proxy()
+    if user_proxy:
+        print(f"Using Proxy: {user_proxy['http']}")
+
+    client = Quotex(
+        user_data_dir="browser_data",
+        proxies=user_proxy
+    )
+    
+    # Connect
+    check_connect, message = await client.connect()
+    
+    if check_connect:
+        print("Quotex Connected Successfully!")
+        return client
+    else:
+        print(f"Connection Failed: {message}")
+        return None
+
 def clean_json_string(content):
     """
     Clean the content string to extract valid JSON.

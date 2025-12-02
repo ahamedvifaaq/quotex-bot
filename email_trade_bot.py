@@ -13,9 +13,16 @@ IMAP_SERVER = "imap.gmail.com"
 TARGET_SUBJECT = "Alert: quotex bot"
 
 async def connect_quotex():
+    print("Fetching credentials...")
     email, password = credentials()
+    print(f"Credentials obtained for email: {email}")
+    
+    print("Initializing Quotex client...")
     client = Quotex(email=email, password=password, lang="pt")
+    
+    print("Connecting to Quotex WebSocket...")
     check, message = await client.connect()
+    
     if not check:
         print(f"Quotex Connection Failed: {message}")
         return None

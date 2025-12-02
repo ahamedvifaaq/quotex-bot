@@ -20,6 +20,12 @@ def credentials():
         return email, password
 
     if not config_path.exists():
+        # If running on Render (or headless), do not block on input
+        if os.environ.get("RENDER") or os.environ.get("CI"):
+            print("ERROR: Config file not found and Environment Variables not set.")
+            print("Please set QUOTEX_EMAIL and QUOTEX_PASS in Render Environment Variables.")
+            sys.exit(1)
+
         config_path.parent.mkdir(exist_ok=True, parents=True)
         text_settings = (
             f"[settings]\n"

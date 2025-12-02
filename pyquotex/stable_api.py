@@ -35,8 +35,7 @@ class Quotex:
             root_path=".",
             user_data_dir="browser",
             asset_default="EURUSD",
-            period_default=60,
-            proxies=None
+            period_default=60
     ):
         self.size = [
             5,
@@ -61,7 +60,6 @@ class Quotex:
         self.user_data_dir = user_data_dir
         self.asset_default = asset_default
         self.period_default = period_default
-        self.proxies = proxies
         self.subscribe_candle = []
         self.subscribe_candle_all_size = []
         self.subscribe_mood = []
@@ -223,8 +221,7 @@ class Quotex:
             self.password,
             self.lang,
             resource_path=self.resource_path,
-            user_data_dir=self.user_data_dir,
-            proxies=self.proxies
+            user_data_dir=self.user_data_dir
         )
         await self.close()
         self.api.trace_ws = self.debug_ws_enable

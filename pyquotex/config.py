@@ -12,10 +12,10 @@ config = configparser.ConfigParser(interpolation=None)
 
 
 def credentials():
-    # Check Environment Variables first (for Cloud/Render)
+    # Check Environment Variables first (for Render/Docker)
     email = os.environ.get("QUOTEX_EMAIL")
     password = os.environ.get("QUOTEX_PASS")
-    
+
     if email and password:
         return email, password
 
@@ -41,10 +41,10 @@ def credentials():
 
 
 def email_credentials():
-    # Check Environment Variables first (for Cloud/Render)
+    # Check Environment Variables first
     email_user = os.environ.get("EMAIL_USER")
     email_pass = os.environ.get("EMAIL_PASS")
-    
+
     if email_user and email_pass:
         return email_user, email_pass
 
@@ -71,21 +71,6 @@ def email_credentials():
             config.write(configfile)
 
     return email_user, email_pass
-
-def proxy():
-    # Check Environment Variables first
-    proxy_url = os.environ.get("QUOTEX_PROXY")
-    
-    if proxy_url:
-        return {"http": proxy_url, "https": proxy_url}
-        
-    config.read(config_path, encoding="utf-8")
-    proxy_url = config.get("settings", "proxy", fallback=None)
-    
-    if proxy_url:
-        return {"http": proxy_url, "https": proxy_url}
-        
-    return None
 
 
 def resource_path(relative_path: str | Path) -> Path:

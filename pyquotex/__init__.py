@@ -14,5 +14,3 @@ def _prepare_logging():
 
 
 _prepare_logging()
-
-from .stable_api import Quotex

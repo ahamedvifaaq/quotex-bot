@@ -1,41 +1,26 @@
-from pyquotex import Quotex
-from pyquotex.config import email_credentials, proxy
 import asyncio
 import imaplib
 import email
-from email.header import decode_header
 import json
 import time
 import re
-from pathlib import Path
-from database import log_trade, init_db
+from email.header import decode_header
+from pyquotex.stable_api import Quotex
+from pyquotex.config import credentials, email_credentials
 
 # Email Configuration
 IMAP_SERVER = "imap.gmail.com"
+TARGET_SUBJECT = "Alert: quotex bot"
 
 async def connect_quotex():
-    """
-    Connects to Quotex using credentials from config.
-    """
-    # Get Proxy
-    user_proxy = proxy()
-    if user_proxy:
-        print(f"Using Proxy: {user_proxy['http']}")
-
-    client = Quotex(
-        user_data_dir="browser_data",
-        proxies=user_proxy
-    )
-    
-    # Connect
-    check_connect, message = await client.connect()
-    
-    if check_connect:
-        print("Quotex Connected Successfully!")
-        return client
-    else:
-        print(f"Connection Failed: {message}")
+    email, password = credentials()
+    client = Quotex(email=email, password=password, lang="pt")
+    check, message = await client.connect()
+    if not check:
+        print(f"Quotex Connection Failed: {message}")
         return None
+    print("Quotex Connected Successfully!")
+    return client
 
 def clean_json_string(content):
     """
@@ -93,49 +78,8 @@ async def process_email_signal(client, content):
         status, buy_info = await client.buy(amount, asset_name, direction, duration)
         
         if status:
-            trade_id = buy_info['id']
-            print(f"Trade Placed! ID: {trade_id}")
-            
-            # Log initial trade
-            await log_trade({
-                "id": trade_id,
-                "asset": asset_name,
-                "direction": direction,
-                "amount": amount,
-                "duration": duration,
-                "status": "open",
-                "result": "pending"
-            })
-            
-            # Wait for result
-            print(f"Waiting for result ({duration}s)...")
-            try:
-                is_win = await client.check_win(trade_id)
-                
-                result = "WIN" if is_win else "LOSS"
-                print(f"Result: {result}")
-                
-                # Calculate profit (approximate based on standard payout if not available easily, 
-                # but check_win usually returns bool. We can get balance to check profit or fetch payout)
-                # For simplicity, let's get new balance
-                new_balance = await client.get_balance()
-                
-                # We can try to get payout info, but for now let's estimate or just log win/loss
-                # If win, profit is usually around 80-90%. Let's fetch payout.
-                payout = client.get_payout_by_asset(asset_name)
-                profit = (amount * payout / 100) if is_win else -amount
-                
-                await log_trade({
-                    "id": trade_id,
-                    "status": "completed",
-                    "result": result,
-                    "profit": profit,
-                    "balance_after": new_balance
-                })
-                
-            except Exception as e:
-                print(f"Error checking result: {e}")
-                
+            print(f"Trade Placed! ID: {buy_info['id']}")
+            # Optional: Wait for result or just continue listening
         else:
             print(f"Trade Failed: {buy_info}")
 
@@ -208,39 +152,53 @@ async def email_listener(client):
         # Wait before next check
         await asyncio.sleep(2)
 
-async def start_bot_background():
-    """
-    Starts the trading bot in the background.
-    """
-    print("Starting Trading Bot Background Task...")
+async def main():
+    client = await connect_quotex()
+    if not client:
+        return
+
+    # Start email listener
+    # We also need to keep the websocket connection alive.
+    # The client.check_connect() loop in trade_bot.py example suggests we need to maintain it.
     
-    # Retry loop for connection
-    while True:
-        try:
-            client = await connect_quotex()
-            if client:
-                # Start email listener
-                listener_task = asyncio.create_task(email_listener(client))
-                
-                # Keep-alive loop
-                while True:
-                    if not await client.check_connect():
-                        print("Quotex connection lost. Reconnecting...")
-                        await client.connect()
-                    await asyncio.sleep(10)
-            else:
-                print("Failed to connect to Quotex. Retrying in 30s...")
-        except Exception as e:
-            print(f"Bot Error: {e}")
-        
-        await asyncio.sleep(30)
+    listener_task = asyncio.create_task(email_listener(client))
+    
+    try:
+        while True:
+            # Keep-alive check for Quotex
+            if not await client.check_connect():
+                print("Quotex connection lost. Reconnecting...")
+                await client.connect()
+            await asyncio.sleep(10)
+    except KeyboardInterrupt:
+        print("Stopping bot...")
+    finally:
+        client.close()
+
+import os
+import threading
+from flask import Flask
+
+# Dummy Flask App for Render Web Service
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Quotex Bot is Running!"
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
+    # Start Web Server in a separate thread
+    web_thread = threading.Thread(target=run_web_server)
+    web_thread.daemon = True
+    web_thread.start()
+
     loop = asyncio.new_event_loop()
     try:
-        # For standalone testing
-        loop.run_until_complete(init_db())
-        loop.run_until_complete(start_bot_background())
+        loop.run_until_complete(main())
     except KeyboardInterrupt:
         print("\nExiting...")
     finally:

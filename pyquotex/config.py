@@ -12,20 +12,8 @@ config = configparser.ConfigParser(interpolation=None)
 
 
 def credentials():
-    # Check Environment Variables first (for Render/Docker)
-    email = os.environ.get("QUOTEX_EMAIL")
-    password = os.environ.get("QUOTEX_PASS")
-
-    if email and password:
-        return email, password
 
     if not config_path.exists():
-        # If running on Render (or headless), do not block on input
-        if os.environ.get("RENDER") or os.environ.get("CI"):
-            print("ERROR: Config file not found and Environment Variables not set.")
-            print("Please set QUOTEX_EMAIL and QUOTEX_PASS in Render Environment Variables.")
-            sys.exit(1)
-
         config_path.parent.mkdir(exist_ok=True, parents=True)
         text_settings = (
             f"[settings]\n"
@@ -36,24 +24,29 @@ def credentials():
 
     config.read(config_path, encoding="utf-8")
 
-    email = config.get("settings", "email")
-    password = config.get("settings", "password")
+    email = config.get("settings", "email", fallback=None)
+    password = config.get("settings", "password", fallback=None)
 
     if not email or not password:
-        print("Email and password cannot be left blank...")
-        sys.exit()
+        print("\n--- Quotex Account Configuration ---")
+        if not email:
+            email = input('Enter your Quotex account email: ')
+        if not password:
+            password = input('Enter your Quotex account password: ')
+
+        if not config.has_section("settings"):
+            config.add_section("settings")
+
+        config.set("settings", "email", email)
+        config.set("settings", "password", password)
+
+        with open(config_path, 'w') as configfile:
+            config.write(configfile)
 
     return email, password
 
 
 def email_credentials():
-    # Check Environment Variables first
-    email_user = os.environ.get("EMAIL_USER")
-    email_pass = os.environ.get("EMAIL_PASS")
-
-    if email_user and email_pass:
-        return email_user, email_pass
-
     config.read(config_path, encoding="utf-8")
     
     email_user = config.get("settings", "email_user", fallback=None)

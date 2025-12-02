@@ -1,0 +1,11 @@
+2025-12-02 11:34:51,413 - __main__ - INFO - Quotex client initialized successfully.
+2025-12-02 11:34:54,435 - __main__ - INFO - Establishing connection...
+2025-12-02 11:34:54,436 - __main__ - INFO - Attempting to connect to Quotex API...
+2025-12-02 11:34:56,403 - websocket - INFO - Websocket connected
+2025-12-02 11:34:56,457 - pyquotex.ws.client - INFO - Websocket client connected.
+2025-12-02 11:34:59,497 - __main__ - INFO - Connected successfully: Websocket connected successfully!!!
+2025-12-02 11:34:59,497 - __main__ - INFO - Executing simple buy: 50.0 on EURUSD_otc in call direction for 60s.
+2025-12-02 11:34:59,498 - __main__ - INFO - Asset EURUSD_otc is open.
+2025-12-02 11:35:02,327 - __main__ - INFO - Buy successful: {'id': 'b3c12051-0d70-4358-91b3-9be4380b262f', 'openTime': '2025-12-02 06:05:02', 'closeTime': '2025-12-02 06:06:00', 'openTimestamp': 1764655502, 'closeTimestamp': 1764655560, 'uid': 67407565, 'isDemo': 1, 'tournamentId': 0, 'amount': 50, 'purchaseTime': 1764655530, 'profit': 37, 'percentProfit': 74, 'percentLoss': 100, 'openPrice': 1.16097, 'copyTicket': '', 'closePrice': 0, 'command': 0, 'asset': 'EURUSD', 'nickname': '#67407565', 'accountBalance': 9770.31, 'requestId': 1764655499, 'openMs': 71, 'currency': 'USD'}
+2025-12-02 11:35:02,330 - __main__ - INFO - Current balance: 9770.31
+2025-12-02 11:35:04,641 - pyquotex.ws.client - INFO - Websocket connection closed.

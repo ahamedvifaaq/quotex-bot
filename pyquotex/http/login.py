@@ -147,6 +147,10 @@ class Login(Browser):
             "div", {"class": "input-control-cabinet__hint"}
         )
         message_in_match = match.text.strip() if match else ""
+        if not message_in_match:
+            # Add debug info if no specific error message found
+            preview = self.response.text[:500].strip().replace('\n', ' ')
+            return False, f"Login failed. No specific error found. Response preview: {preview}..."
         return False, f"Login failed. {message_in_match}"
 
     async def __call__(self, username, password, user_data_dir=None):
